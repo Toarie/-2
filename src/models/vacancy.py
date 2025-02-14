@@ -1,21 +1,36 @@
+from dataclasses import dataclass
+from typing import Optional
+
+@dataclass
 class Vacancy:
-    def __init__(self, title, link, salary, description):
-        self.title = title
-        self.link = link
-        self.salary = self.validate_salary(salary)
-        self.description = description
+    title: str
+    link: str
+    salary: int
+    description: Optional[str] = None
 
-    def validate_salary(self, salary):
-        if salary is None:
-            return "Зарплата не указана"
-        return salary
+    def __str__(self):
+        return f"{self.title} ({self.salary} руб.): {self.link}"
 
-    def __lt__(self, other):
-        return self.salary < other.salary
+    @classmethod
+    def from_dict(cls, data: Dict) -> 'Vacancy':
+        """
+        Создает объект Vacancy из словаря.
+        """
+        salary = data.get('salary', {}).get('from') or 0
+        return cls(
+            title=data.get('name', ''),
+            link=data.get('alternate_url', ''),
+            salary=salary,
+            description=data.get('snippet', {}).get('requirement', '')
+        )
 
-    def __eq__(self, other):
-        return self.salary == other.salary
-
-    @staticmethod
-    def cast_to_object_list(vacancies_json):
-        return [Vacancy(item['name'], item['alternate_url'], item['salary'], item['snippet']['requirement']) for item in vacancies_json]
+    def to_dict(self) -> Dict:
+        """
+        Преобразует объект Vacancy в словарь.
+        """
+        return {
+            "title": self.title,
+            "link": self.link,
+            "salary": self.salary,
+            "description": self.description
+        }

@@ -1,49 +1,35 @@
 import json
-import os
-from abc import ABC, abstractmethod
+from typing import List
+from src.models.vacancy import Vacancy
 
-class VacancyStorage(ABC):
-    @abstractmethod
-    def add_vacancy(self, vacancy):
-        pass
+class JSONSaver:
+    __slots__ = ['__filename']
 
-    @abstractmethod
-    def get_vacancies(self, criteria):
-        pass
+    def __init__(self, filename: str):
+        self.__filename = filename
 
-    @abstractmethod
-    def delete_vacancy(self, vacancy):
-        pass
+    def add_vacancy(self, vacancy: Vacancy):
+        """
+        Добавляет вакансию в файл, если она не дублируется.
+        """
+        vacancies = self.load_vacancies()
+        if vacancy not in vacancies:
+            vacancies.append(vacancy)
+            self.save_vacancies(vacancies)
 
-class JSONSaver(VacancyStorage):
-    def __init__(self, filename='vacancies.json'):
-        self.filename = filename
-        self._ensure_data_directory_exists()
+    def load_vacancies(self) -> List[Vacancy]:
+        """
+        Загружает вакансии из файла.
+        """
+        try:
+            with open(self.__filename, 'r', encoding='utf-8') as file:
+                return [Vacancy.from_dict(data) for data in json.load(file)]
+        except FileNotFoundError:
+            return []
 
-    def _ensure_data_directory_exists(self):
-        if not os.path.exists('data'):
-            os.makedirs('data')
-        self.filename = os.path.join('data', self.filename)
-
-    def add_vacancy(self, vacancy):
-        with open(self.filename, 'a+') as file:
-            file.seek(0)
-            try:
-                data = json.load(file)
-            except json.JSONDecodeError:
-                data = []
-            data.append(vacancy.__dict__)
-            file.seek(0)
-            json.dump(data, file, indent=4)
-
-    def get_vacancies(self, criteria):
-        with open(self.filename, 'r') as file:
-            data = json.load(file)
-            return [item for item in data if criteria(item)]
-
-    def delete_vacancy(self, vacancy):
-        with open(self.filename, 'r') as file:
-            data = json.load(file)
-        data = [item for item in data if item != vacancy.__dict__]
-        with open(self.filename, 'w') as file:
-            json.dump(data, file, indent=4)
+    def save_vacancies(self, vacancies: List[Vacancy]):
+        """
+        Сохраняет вакансии в файл.
+        """
+        with open(self.__filename, 'w', encoding='utf-8') as file:
+            json.dump([vacancy.to_dict() for vacancy in vacancies], file, ensure_ascii=False, indent=4)
