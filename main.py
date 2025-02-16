@@ -1,16 +1,30 @@
-# This is a sample Python script.
+from src.api.hh_api import HeadHunterAPI
+from src.storage.json_saver import JSONSaver
+from src.utils.helpers import filter_vacancies, sort_vacancies
+from src.models.vacancy import Vacancy
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+def user_interaction():
+    hh_api = HeadHunterAPI()
+    search_query = input("Введите поисковый запрос: ")
+    vacancies = hh_api.get_vacancies(search_query)
 
+    # Преобразуем данные в объекты Vacancy
+    vacancies_list = []
+    for vacancy_data in vacancies:
+        try:
+            vacancy = Vacancy.from_dict(vacancy_data)
+            vacancies_list.append(vacancy)
+        except Exception as e:
+            print(f"Ошибка при обработке вакансии: {e}")
+            continue
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+    filter_words = input("Введите ключевые слова для фильтрации вакансий: ").split()
+    filtered_vacancies = filter_vacancies(vacancies_list, filter_words)
 
+    sorted_vacancies = sort_vacancies(filtered_vacancies)
+    top_n = int(input("Введите количество вакансий для вывода в топ N: "))
+    for vacancy in sorted_vacancies[:top_n]:
+        print(vacancy)
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+if __name__ == "__main__":
+    user_interaction()
