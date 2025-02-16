@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Dict
 
 @dataclass
 class Vacancy:
@@ -16,12 +16,22 @@ class Vacancy:
         """
         Создает объект Vacancy из словаря.
         """
-        salary = data.get('salary', {}).get('from') or 0
+        # Обработка salary
+        salary_data = data.get('salary')
+        if salary_data and isinstance(salary_data, dict):
+            salary = salary_data.get('from') or 0
+        else:
+            salary = 0
+
+        # Обработка description
+        snippet = data.get('snippet', {})
+        description = snippet.get('requirement') if isinstance(snippet, dict) else None
+
         return cls(
-            title=data.get('name', ''),
+            title=data.get('name', 'Без названия'),
             link=data.get('alternate_url', ''),
             salary=salary,
-            description=data.get('snippet', {}).get('requirement', '')
+            description=description
         )
 
     def to_dict(self) -> Dict:

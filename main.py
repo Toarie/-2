@@ -7,7 +7,16 @@ def user_interaction():
     hh_api = HeadHunterAPI()
     search_query = input("Введите поисковый запрос: ")
     vacancies = hh_api.get_vacancies(search_query)
-    vacancies_list = [Vacancy.from_dict(vacancy) for vacancy in vacancies]
+
+    # Преобразуем данные в объекты Vacancy
+    vacancies_list = []
+    for vacancy_data in vacancies:
+        try:
+            vacancy = Vacancy.from_dict(vacancy_data)
+            vacancies_list.append(vacancy)
+        except Exception as e:
+            print(f"Ошибка при обработке вакансии: {e}")
+            continue
 
     filter_words = input("Введите ключевые слова для фильтрации вакансий: ").split()
     filtered_vacancies = filter_vacancies(vacancies_list, filter_words)
